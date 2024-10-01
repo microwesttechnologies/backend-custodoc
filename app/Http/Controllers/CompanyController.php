@@ -33,7 +33,6 @@ class CompanyController extends Controller
                 }
             }
         } else {
-            // Si es solo una compañía
             try {
                 $this->validateCompany($companies);
                 Company::create($companies);
@@ -44,7 +43,6 @@ class CompanyController extends Controller
             }
         }
 
-        // Si hubo errores, devolverlos
         if (!empty($errors)) {
             return response()->json(['errors' => $errors], 422);
         }
