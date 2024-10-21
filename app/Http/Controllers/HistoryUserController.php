@@ -17,40 +17,46 @@ class HistoryUserController extends Controller
     {
         $historyRecords = $request->all();
         $errors = [];
-    
-        if (isset($historyRecords[0])) {
-            // Si es un array de registros de historial
-            foreach ($historyRecords as $index => $record) {
+
+        // Validar que se reciba un archivo
+        if ($request->hasFile('document')) {
+            $file = $request->file('document');
+            $path = $file->store('documents');
+
+            if (isset($historyRecords[0])) {
+                foreach ($historyRecords as $index => $record) {
+                    try {
+                        $this->validateRecord($record);
+                        $record['routeDocument'] = $path;
+                        HistoryUser::create($record);
+                    } catch (\Illuminate\Validation\ValidationException $e) {
+                        $errors['record_' . $index] = $e->errors();
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        $errors['record_' . $index] = ['error' => $e->getMessage()];
+                    }
+                }
+            } else {
                 try {
-                    $this->validateRecord($record);
-                    HistoryUser::create($record);
+                    $this->validateRecord($historyRecords);
+                    $historyRecords['routeDocument'] = $path;
+                    HistoryUser::create($historyRecords);
                 } catch (\Illuminate\Validation\ValidationException $e) {
-                    // Guardar errores específicos de este registro
-                    $errors['record_' . $index] = $e->errors();
+                    return response()->json(['error' => $e->errors()], 422);
                 } catch (\Illuminate\Database\QueryException $e) {
-                    $errors['record_' . $index] = ['error' => $e->getMessage()];
+                    return response()->json(['error' => $e->getMessage()], 422);
                 }
             }
         } else {
-            // Si es solo un registro de historial
-            try {
-                $this->validateRecord($historyRecords);
-                HistoryUser::create($historyRecords);
-            } catch (\Illuminate\Validation\ValidationException $e) {
-                return response()->json(['error' => $e->errors()], 422);
-            } catch (\Illuminate\Database\QueryException $e) {
-                return response()->json(['error' => $e->getMessage()], 422);
-            }
+            return response()->json(['error' => 'No se ha recibido ningún archivo'], 422);
         }
-    
-        // Si hubo errores, devolverlos
+
         if (!empty($errors)) {
             return response()->json(['errors' => $errors], 422);
         }
-    
+
         return response()->json(['message' => 'Registros de historial creados correctamente'], 201);
     }
-    
+
     private function validateRecord($record)
     {
         return Validator::make($record, [
@@ -61,7 +67,7 @@ class HistoryUserController extends Controller
             'description' => 'nullable|string'
         ])->validate();
     }
-    
+
 
     public function show($id)
     {
