@@ -23,6 +23,9 @@ class JwtMiddleware
             if (!$user) {
                 return response()->json(['user_not_found'], 401);
             }
+
+            // Agregar el usuario al request
+            // $request->merge(['user' => $user]);
         } catch (Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
             return response()->json(['token_expired'], 401);
         } catch (Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {

@@ -4,49 +4,62 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-// use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Hash;
 
 
 class UserController extends Controller
 {
-    public function index()
+    public function getAllUsers()
     {
-        return User::all();
+        $userAuth = Auth::user();
+
+        $queryUser = User::select([
+            'users.*',
+            'c.name AS name_company',
+            'td.name AS name_type_document'
+        ])->join('companies AS c', 'users.id_company', 'c.id_company')
+            ->join('types_document AS td', 'users.id_document', 'td.id_document')
+            ->join('roles AS r', 'users.id_rol', 'r.id_rol')
+            ->where('identification', '!=', $userAuth->identification)
+            ->orderBy('created_at', 'DESC');
+
+
+        if ($userAuth->id_rol !== 1) {
+            $queryUser->where('users.id_company', $userAuth->id_company);
+        }
+
+        return response()->json($queryUser->get());
     }
 
-    public function store(Request $request)
+    public function createUser(Request $request)
     {
-        $users = $request->all();
-        $errors = [];
-        // Hash::make($request->password);
-        if (isset($users[0])) {
-            foreach ($users as $index => $user) {
-                try {
-                    $this->validateUser($user);
-                    User::create($user);
-                } catch (\Illuminate\Validation\ValidationException $e) {
-                    $errors['user_' . $index] = $e->errors();
-                } catch (\Illuminate\Database\QueryException $e) {
-                    $errors['user_' . $index] = ['error' => $e->getMessage()];
-                }
+        try {
+
+            $user  = User::where('identification', $request->identification)->orWhere('email', $request->email)->first();
+            $userAuth = Auth::user();
+
+            if ($user) {
+                return response()->json(['status' => false, 'message' => ($user->email === $request->email ? 'El email' : 'La identification') . ' ya se encuentra registrado']);
             }
-        } else {
-            try {
-                $this->validateUser($users);
-                User::create($users);
-            } catch (\Illuminate\Validation\ValidationException $e) {
-                return response()->json(['error' => $e->errors()], 422);
-            } catch (\Illuminate\Database\QueryException $e) {
-                return response()->json(['error' => $e->getMessage()], 422);
+
+            $data = $request->all();
+            $data['password'] = Hash::make($request->password);
+
+            if ($userAuth->id_rol !== 1) {
+                $data['id_company'] = $userAuth->id_company;
+            }
+
+            User::create($data);
+            return response()->json(['status' => true, 'message' => 'Registro exitoso']);
+        } catch (\Throwable $th) {
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
             }
         }
-
-        if (!empty($errors)) {
-            return response()->json(['errors' => $errors], 422);
-        }
-
-        return response()->json(['message' => 'Usuarios creados correctamente'], 201);
     }
 
     private function validateUser($user)
@@ -59,23 +72,5 @@ class UserController extends Controller
             'state' => 'required|integer',
             'id_company' => 'required|integer',
         ])->validate();
-    }
-
-    public function show($id)
-    {
-        return User::findOrFail($id);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-        $user->update($request->all());
-        return $user;
-    }
-
-    public function destroy($id)
-    {
-        User::destroy($id);
-        return response()->noContent();
     }
 }

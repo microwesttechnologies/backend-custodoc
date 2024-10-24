@@ -5,15 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TypesDocuments extends Model
+class Document extends Model
 {
     use HasFactory;
 
-    protected $table = 'types_document';
-    protected $primaryKey = 'id_document';
+    protected $table = 'documents';
 
     protected $fillable = [
-        'id_document',
-        'name'
+        'id_history',
+        'identification',
+        'name',
+        'path',
+        'description'
     ];
 }
