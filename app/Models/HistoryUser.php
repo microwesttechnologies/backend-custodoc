@@ -13,10 +13,10 @@ class HistoryUser extends Model
 
     protected $fillable = [
         'id_user',
-        'id_company',  
+        'id_company',
         'nameDocument',
         'routeDocument',
-        'description', 
+        'description',
         'dateUpload',
         'dateDelete',
     ];
@@ -33,4 +33,3 @@ class HistoryUser extends Model
         return $this->belongsTo(Company::class, 'id_company');
     }
 }
-

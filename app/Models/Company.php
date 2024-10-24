@@ -10,12 +10,16 @@ class Company extends Model
     use HasFactory;
 
     protected $table = 'companies';
+    protected $primaryKey = 'id_company';
 
     protected $fillable = [
-        'nameCompany',
-        'typeCompany',
-        'addressCompany',
-        'cityCompany',
-        'countryCompany',
+        'id_company',
+        'name',
+        'type',
+        'address',
+        'city',
+        'country',
+        'nit',
+        'phone',
     ];
 }

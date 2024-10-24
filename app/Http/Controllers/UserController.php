@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+// use Illuminate\Support\Facades\Hash;
 
 
 class UserController extends Controller
@@ -18,7 +19,7 @@ class UserController extends Controller
     {
         $users = $request->all();
         $errors = [];
-    
+        // Hash::make($request->password);
         if (isset($users[0])) {
             foreach ($users as $index => $user) {
                 try {
@@ -40,15 +41,14 @@ class UserController extends Controller
                 return response()->json(['error' => $e->getMessage()], 422);
             }
         }
-    
+
         if (!empty($errors)) {
             return response()->json(['errors' => $errors], 422);
         }
-    
+
         return response()->json(['message' => 'Usuarios creados correctamente'], 201);
     }
-    
-    
+
     private function validateUser($user)
     {
         return Validator::make($user, [
@@ -60,10 +60,6 @@ class UserController extends Controller
             'id_company' => 'required|integer',
         ])->validate();
     }
-    
-    
-    
-    
 
     public function show($id)
     {
