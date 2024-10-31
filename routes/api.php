@@ -48,6 +48,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     ], function () {
         Route::get('/', [DocumentController::class, 'getAllDocuments']);
         Route::post('/', [DocumentController::class, 'createDocument']);
+        Route::get('/getFile/{id_history}', [DocumentController::class, 'getFile']);
     });
 
     Route::get('logout', [AuthController::class, 'logout']);

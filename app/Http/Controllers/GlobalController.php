@@ -65,6 +65,6 @@ class GlobalController extends Controller
         chmod($path . '/' . $filename, 0644); // Permisos de lectura y escritura para el propietario, solo lectura para otros
 
         // Generar la URL pública para poder acceder al archivo desde el navegador
-        return Storage::url($dirPath . '/' . $filename);
+        return $dirPath . '/' . $filename;
     }
 }

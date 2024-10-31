@@ -10,6 +10,7 @@ class Document extends Model
     use HasFactory;
 
     protected $table = 'documents';
+    protected $primaryKey = 'id_history';
 
     protected $fillable = [
         'id_history',

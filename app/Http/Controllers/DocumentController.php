@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use App\Models\Document;
+use Illuminate\Support\Facades\File;
 
 class DocumentController extends Controller
 {
@@ -12,7 +14,7 @@ class DocumentController extends Controller
     {
         $user = Auth::user();
 
-        $queryDocuments = Document::select('documents.*','c.name AS name_customer')
+        $queryDocuments = Document::select('documents.*', 'c.name AS name_customer')
             ->join('customers AS c', 'documents.identification', 'c.identification')
             ->orderBy('created_at', 'DESC');
 
@@ -45,5 +47,16 @@ class DocumentController extends Controller
                 return response()->json(['status' => false, 'message' => $th]);
             }
         }
+    }
+
+    public function getFile($id_history)
+    {
+        $document = Document::find($id_history);
+
+        if ($document && File::exists(storage_path('app/public/' . $document->path))) {
+            return response()->file(storage_path('app/public/' . $document->path));
+        }
+
+        return response()->json([], 404);
     }
 }
