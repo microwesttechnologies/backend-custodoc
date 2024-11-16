@@ -18,15 +18,15 @@ class GlobalController extends Controller
         $detail = [];
 
         if ($user->id_rol === 1) {
-            $detail['company'] = ['label' => 'Compañías', 'amount' => Company::count(), 'icon' => 'pi pi-building'];
+            $detail['company'] = ['label' => 'Compañías', 'amount' => Company::where('id_company', '!=', '1')->count(), 'icon' => 'pi pi-building'];
         }
 
         $queryCustomers = Customer::query();
         $queryDocuments = Document::query();
-        $queryUsers = User::query();
+        $queryUsers = User::query()->where('id_rol', '!=', 1);
 
         if ($user->id_rol === 2) {
-            $queryUsers->where('id_company', $user->id_company);
+            $queryUsers->where([['id_company', $user->id_company], ['identification', '!=', $user->identification]]);
         }
 
         if ($user->id_rol === 2 || $user->id_rol === 3) {

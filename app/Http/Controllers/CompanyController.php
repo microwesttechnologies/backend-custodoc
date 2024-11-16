@@ -11,7 +11,8 @@ class CompanyController extends Controller
 {
     public function getAllCompanies()
     {
-        return response()->json(Company::orderBy('created_at', 'DESC')->get());
+        $companies = Company::where('id_company', '!=', '1')->orderBy('created_at', 'DESC')->get();
+        return response()->json($companies);
     }
 
     public function createCompany(Request $request)
@@ -27,5 +28,4 @@ class CompanyController extends Controller
             }
         }
     }
-
 }

@@ -1,12 +1,13 @@
 <?php
 
 use App\Http\Controllers\TypesDocumentController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\GlobalController;
+use App\Http\Controllers\RoutesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\GlobalController;
 use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +52,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/getFile/{id_history}', [DocumentController::class, 'getFile']);
     });
 
-    Route::get('logout', [AuthController::class, 'logout']);
     Route::get('getDetailCompany', [GlobalController::class, 'getDetailCompany']);
+    Route::get('getRoutesByRole', [RoutesController::class, 'getRoutesByRole']);
+    Route::get('logout', [AuthController::class, 'logout']);
 });
