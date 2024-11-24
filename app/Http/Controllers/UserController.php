@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 
@@ -13,16 +14,18 @@ class UserController extends Controller
 {
     public function getAllUsers()
     {
+
         $userAuth = Auth::user();
 
         $queryUser = User::select([
             'users.*',
             'c.name AS name_company',
-            'td.name AS name_type_document'
-        ])->join('companies AS c', 'users.id_company', 'c.id_company')
+            'td.name AS name_type_document',
+            'r.name AS name_rol'
+        ])->leftJoin('companies AS c', 'users.id_company', 'c.id_company')
             ->join('types_document AS td', 'users.id_document', 'td.id_document')
             ->join('roles AS r', 'users.id_rol', 'r.id_rol')
-            ->where('identification', '!=', $userAuth->identification)
+            ->where('users.id_rol', '!=', 1)
             ->orderBy('created_at', 'DESC');
 
 
@@ -47,8 +50,10 @@ class UserController extends Controller
             $data = $request->all();
             $data['password'] = Hash::make($request->password);
 
-            if ($userAuth->id_rol !== 1) {
+            if ($userAuth->id_rol === 2) {
                 $data['id_company'] = $userAuth->id_company;
+                /** El adminsitrador de las empresas solo pueden crear empleados, el código es 3 */
+                $data['id_rol'] = 3;
             }
 
             User::create($data);
@@ -62,15 +67,19 @@ class UserController extends Controller
         }
     }
 
-    private function validateUser($user)
+    public function getAllRankingUsers()
     {
-        return Validator::make($user, [
-            'nameUser' => 'required|string|max:255',
-            'emailUser' => 'required|string|email|max:255|unique:users',
-            'passUser' => 'required|string|min:8',
-            'role' => 'required|string',
-            'state' => 'required|integer',
-            'id_company' => 'required|integer',
-        ])->validate();
+
+        $queryRankingUser = User::select([
+            'users.identification',
+            'c.name AS name_company',
+            'users.name AS name_user',
+            DB::raw('COUNT(d.id_history) AS total_documents')
+        ])
+            ->leftJoin('companies AS c', 'users.id_company', 'c.id_company')
+            ->Join('documents AS d', 'users.identification', 'd.user_identification')
+            ->groupBy('users.identification');
+
+        return response()->json($queryRankingUser->get());
     }
 }

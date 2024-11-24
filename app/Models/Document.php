@@ -14,6 +14,7 @@ class Document extends Model
 
     protected $fillable = [
         'id_history',
+        'user_identification',
         'identification',
         'name',
         'path',

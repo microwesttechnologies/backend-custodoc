@@ -33,6 +33,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::group([
         'prefix' => 'user',
     ], function () {
+        Route::get('/getAllRankingUsers', [UserController::class, 'getAllRankingUsers']);
         Route::get('/', [UserController::class, 'getAllUsers']);
         Route::post('/', [UserController::class, 'createUser']);
         Route::put('/', [UserController::class, 'updateUser']);

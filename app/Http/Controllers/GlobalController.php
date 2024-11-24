@@ -18,29 +18,32 @@ class GlobalController extends Controller
         $detail = [];
 
         if ($user->id_rol === 1) {
-            $detail['company'] = ['label' => 'Compañías', 'amount' => Company::where('id_company', '!=', '1')->count(), 'icon' => 'pi pi-building'];
+            $detail['company'] = ['label' => 'Compañías', 'amount' => Company::where('id_company', '!=', '1')->count(), 'icon' => 'domain'];
         }
 
         $queryCustomers = Customer::query();
         $queryDocuments = Document::query();
-        $queryUsers = User::query()->where('id_rol', '!=', 1);
+        $queryUsers = User::query();
 
-        if ($user->id_rol === 2) {
-            $queryUsers->where([['id_company', $user->id_company], ['identification', '!=', $user->identification]]);
+        if ($user->id_rol === 1) {
+            $queryUsers->where('id_rol', '!=', 1);
         }
 
         if ($user->id_rol === 2 || $user->id_rol === 3) {
+            $queryUsers->where('id_company', $user->id_company);
             $queryCustomers->where('id_company', $user->id_company);
             $queryDocuments->join('customers AS c', 'documents.identification', 'c.identification')
                 ->where('c.id_company', $user->id_company);
         }
 
-        if ($user->id_rol !== 3) {
-            $detail['users'] = ['label' => 'Empleados', 'amount' => $queryUsers->count(), 'icon' => 'pi pi-users'];
+        if ($user->id_rol !== 3 && $user->id_rol !== 4) {
+            $detail['users'] = ['label' => 'Empleados', 'amount' => $queryUsers->count(), 'icon' => 'supervisor_account'];
         }
 
-        $detail['customers'] = ['label' => 'Clientes', 'amount' => $queryCustomers->count(), 'icon' => 'pi pi-user'];
-        $detail['documents'] = ['label' => 'Documentos', 'amount' => $queryDocuments->count(), 'icon' => 'pi pi-file'];
+        if($user->id_rol !== 4){
+            $detail['customers'] = ['label' => 'Clientes', 'amount' => $queryCustomers->count(), 'icon' => 'manage_accounts'];
+        }
+        $detail['documents'] = ['label' => 'Documentos', 'amount' => $queryDocuments->count(), 'icon' => 'folder_open'];
 
         return $detail;
     }

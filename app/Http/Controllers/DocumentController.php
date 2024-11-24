@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Document;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class DocumentController extends Controller
@@ -30,15 +31,18 @@ class DocumentController extends Controller
 
         try {
             $global = new GlobalController();
+            $user = Auth::user();
 
             $document = [
-                'identification' => $request->identification,
-                'name' => $request->name,
-                'description' => $request->description,
                 'path' => $global->uploadFile($request->file('file'), 'documents'),
+                'user_identification' => $user->identification,
+                'identification' => $request->identification,
+                'description' => $request->description,
+                'name' => $request->name,
             ];
 
             Document::create($document);
+
             return response()->json(['status' => true, 'message' => 'Registro exitoso']);
         } catch (\Throwable $th) {
             if ($th->getMessage() !== null) {
@@ -48,6 +52,8 @@ class DocumentController extends Controller
             }
         }
     }
+
+    // public function upload
 
     public function getFile($id_history)
     {

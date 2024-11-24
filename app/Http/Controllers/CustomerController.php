@@ -20,7 +20,7 @@ class CustomerController extends Controller
 
         $userAuth = Auth::user();
 
-        if ($userAuth->id_rol !== 1) {
+        if ($userAuth->id_rol !== 1 && $userAuth->id_rol !== 4) {
             $queryCustomers->where('customers.id_company', $userAuth->id_company);
         }
 
