@@ -78,7 +78,7 @@ class UserController extends Controller
         ])
             ->leftJoin('companies AS c', 'users.id_company', 'c.id_company')
             ->Join('documents AS d', 'users.identification', 'd.user_identification')
-            ->groupBy('users.identification');
+            ->groupBy('users.identification', 'c.name', 'users.name');
 
         return response()->json($queryRankingUser->get());
     }

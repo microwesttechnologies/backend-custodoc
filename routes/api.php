@@ -48,9 +48,11 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::group([
         'prefix' => 'document',
     ], function () {
+        Route::get('/getAllDocumentsByCustomer/{id_customer}', [DocumentController::class, 'getAllDocumentsByCustomer']);
+        Route::post('/bulkUploadDocuments', [DocumentController::class, 'bulkUploadDocuments']);
+        Route::get('/getFile/{id_history}', [DocumentController::class, 'getFile']);
         Route::get('/', [DocumentController::class, 'getAllDocuments']);
         Route::post('/', [DocumentController::class, 'createDocument']);
-        Route::get('/getFile/{id_history}', [DocumentController::class, 'getFile']);
     });
 
     Route::get('getDetailCompany', [GlobalController::class, 'getDetailCompany']);

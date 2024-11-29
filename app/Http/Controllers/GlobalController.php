@@ -18,7 +18,7 @@ class GlobalController extends Controller
         $detail = [];
 
         if ($user->id_rol === 1) {
-            $detail['company'] = ['label' => 'Compañías', 'amount' => Company::where('id_company', '!=', '1')->count(), 'icon' => 'domain'];
+            $detail['company'] = ['label' => 'Compañías', 'amount' => Company::where('id_company', '!=', '1')->count(), 'icon' => 'fa-building'];
         }
 
         $queryCustomers = Customer::query();
@@ -29,21 +29,19 @@ class GlobalController extends Controller
             $queryUsers->where('id_rol', '!=', 1);
         }
 
-        if ($user->id_rol === 2 || $user->id_rol === 3) {
+        if ($user->id_rol === 2) {
             $queryUsers->where('id_company', $user->id_company);
             $queryCustomers->where('id_company', $user->id_company);
             $queryDocuments->join('customers AS c', 'documents.identification', 'c.identification')
                 ->where('c.id_company', $user->id_company);
         }
 
-        if ($user->id_rol !== 3 && $user->id_rol !== 4) {
-            $detail['users'] = ['label' => 'Empleados', 'amount' => $queryUsers->count(), 'icon' => 'supervisor_account'];
+        if ($user->id_rol !== 4) {
+            $detail['users'] = ['label' => 'Empleados', 'amount' => $queryUsers->count(), 'icon' => 'fa-building-user'];
+            $detail['customers'] = ['label' => 'Clientes', 'amount' => $queryCustomers->count(), 'icon' => 'fa-users'];
         }
 
-        if($user->id_rol !== 4){
-            $detail['customers'] = ['label' => 'Clientes', 'amount' => $queryCustomers->count(), 'icon' => 'manage_accounts'];
-        }
-        $detail['documents'] = ['label' => 'Documentos', 'amount' => $queryDocuments->count(), 'icon' => 'folder_open'];
+        $detail['documents'] = ['label' => 'Documentos', 'amount' => $queryDocuments->count(), 'icon' => 'fa-folder-open'];
 
         return $detail;
     }

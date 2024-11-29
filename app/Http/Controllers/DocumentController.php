@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
 use App\Models\Document;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 
 class DocumentController extends Controller
 {
@@ -29,12 +28,14 @@ class DocumentController extends Controller
     public function createDocument(Request $request)
     {
 
+        $filePath = "";
         try {
             $global = new GlobalController();
             $user = Auth::user();
+            $filePath = $global->uploadFile($request->file('file'), 'documents');
 
             $document = [
-                'path' => $global->uploadFile($request->file('file'), 'documents'),
+                'path' => $filePath,
                 'user_identification' => $user->identification,
                 'identification' => $request->identification,
                 'description' => $request->description,
@@ -45,6 +46,13 @@ class DocumentController extends Controller
 
             return response()->json(['status' => true, 'message' => 'Registro exitoso']);
         } catch (\Throwable $th) {
+
+            // Eliminar los archivos que se subieron antes del error
+            $fullPath = storage_path('app/public/' . $filePath);
+            if (file_exists($fullPath)) {
+                unlink($fullPath); // Elimina el archivo
+            }
+
             if ($th->getMessage() !== null) {
                 return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
             } else {
@@ -53,7 +61,60 @@ class DocumentController extends Controller
         }
     }
 
-    // public function upload
+    public function bulkUploadDocuments(Request $request)
+    {
+
+        // Inicializar un array para almacenar los archivos subidos
+        $uploadedFiles = [];
+
+        DB::beginTransaction();
+
+        try {
+            $global = new GlobalController();
+            $user = Auth::user();
+
+            foreach ($request->documents as $documentData) {
+                // Sube el archivo y guarda la ruta
+                $filePath = $global->uploadFile($documentData['file'], 'documents');
+                $uploadedFiles[] = $filePath;
+
+                // Crea el registro en la base de datos
+                $document = [
+                    'path' => $filePath,
+                    'user_identification' => $user->identification,
+                    'identification' => $documentData['identification'],
+                    'description' => $documentData['description'],
+                    'name' => $documentData['name'],
+                ];
+
+                Document::create($document);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Documentos y registros guardados exitosamente',
+            ]);
+        } catch (\Throwable $th) {
+            // Revertir transacciones
+            DB::rollBack();
+
+            // Eliminar los archivos que se subieron antes del error
+            foreach ($uploadedFiles as $filePath) {
+                $fullPath = storage_path('app/public/' . $filePath);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath); // Elimina el archivo
+                }
+            }
+
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
+            }
+        }
+    }
 
     public function getFile($id_history)
     {
@@ -64,5 +125,12 @@ class DocumentController extends Controller
         }
 
         return response()->json([], 404);
+    }
+
+    public function getAllDocumentsByCustomer($id_customer)
+    {
+        $documentsByCustomer = Document::where('identification', $id_customer)->get();
+
+        return response()->json($documentsByCustomer);
     }
 }
