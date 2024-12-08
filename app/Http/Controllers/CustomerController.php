@@ -69,6 +69,7 @@ class CustomerController extends Controller
             }
 
             Customer::where('identification', $request->identification)->update([
+                'id_company' => $request->id_company,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'name' => $request->name,

@@ -28,6 +28,7 @@ class DocumentController extends Controller
     public function createDocument(Request $request)
     {
 
+        DB::beginTransaction();
         $filePath = "";
         try {
             $global = new GlobalController();
@@ -44,9 +45,10 @@ class DocumentController extends Controller
 
             Document::create($document);
 
+            DB::commit();
             return response()->json(['status' => true, 'message' => 'Registro exitoso']);
         } catch (\Throwable $th) {
-
+            DB::rollBack();
             // Eliminar los archivos que se subieron antes del error
             $fullPath = storage_path('app/public/' . $filePath);
             if (file_exists($fullPath)) {
@@ -132,5 +134,30 @@ class DocumentController extends Controller
         $documentsByCustomer = Document::where('identification', $id_customer)->get();
 
         return response()->json($documentsByCustomer);
+    }
+
+    public function deleteDocument($id_history)
+    {
+        DB::beginTransaction();
+        try {
+
+            $document = Document::where('id_history', $id_history)->first();
+
+            Document::where('id_history', $id_history)->delete();
+
+            $fullPath = storage_path('app/public/' . $document->path);
+            if (file_exists($fullPath)) {
+                unlink($fullPath); // Elimina el archivo
+            }
+            DB::commit();
+            return response()->json(['status' => true, 'message' => 'Registro eliminado exitosamente']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
+            }
+        }
     }
 }

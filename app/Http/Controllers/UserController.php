@@ -67,6 +67,36 @@ class UserController extends Controller
         }
     }
 
+    public function updateUser(Request $request)
+    {
+        try {
+
+            $user  = User::where([
+                ['email', $request->email],
+                ['identification', '!=', $request->identification]
+            ])->first();
+
+            if ($user) {
+                return response()->json(['status' => false, 'message' => 'El email ya se encuentra registrado']);
+            }
+
+            User::where('identification', $request->identification)->update([
+                'id_company' => $request->id_company,
+                'id_rol' => $request->id_rol,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'name' => $request->name,
+            ]);
+            return response()->json(['status' => true, 'message' => 'Registro exitoso']);
+        } catch (\Throwable $th) {
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
+            }
+        }
+    }
+
     public function getAllRankingUsers()
     {
 
@@ -81,5 +111,21 @@ class UserController extends Controller
             ->groupBy('users.identification', 'c.name', 'users.name');
 
         return response()->json($queryRankingUser->get());
+    }
+
+    public function deleteUser($identification)
+    {
+        try {
+
+            User::where('identification', $identification)->delete();
+
+            return response()->json(['status' => true, 'message' => 'Registro eliminado exitosamente']);
+        } catch (\Throwable $th) {
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
+            }
+        }
     }
 }

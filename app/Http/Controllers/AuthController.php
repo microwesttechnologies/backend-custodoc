@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -26,6 +27,7 @@ class AuthController extends Controller
 
             // Si la autenticación es exitosa, obtenemos el usuario autenticado
             $user = Auth::user();
+            $company = Company::where('id_company', $user->id_company)->first();
 
             $token = JWTAuth::customClaims([
                 'identification' => $user->identification,
@@ -34,6 +36,8 @@ class AuthController extends Controller
                 'id_rol' => $user->id_rol,
                 'state' => $user->state,
                 'id_company' => $user->id_company,
+                'name_company' => $company->name ?? null,
+                'type_company' => $company->typ ?? null
             ])->fromUser($user);
         } catch (JWTException $e) {
             return response()->json(['message' => 'Error al generar el token', 'status' => false], 500);

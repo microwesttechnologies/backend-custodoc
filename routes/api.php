@@ -10,10 +10,11 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\LogRequest;
 
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware([JwtMiddleware::class])->group(function () {
+Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () {
     Route::group([
         'prefix' => 'company',
     ], function () {
@@ -34,6 +35,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         'prefix' => 'user',
     ], function () {
         Route::get('/getAllRankingUsers', [UserController::class, 'getAllRankingUsers']);
+        Route::delete('/{identification}', [DocumentController::class, 'deleteUser']);
         Route::get('/', [UserController::class, 'getAllUsers']);
         Route::post('/', [UserController::class, 'createUser']);
         Route::put('/', [UserController::class, 'updateUser']);
@@ -50,6 +52,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     ], function () {
         Route::get('/getAllDocumentsByCustomer/{id_customer}', [DocumentController::class, 'getAllDocumentsByCustomer']);
         Route::post('/bulkUploadDocuments', [DocumentController::class, 'bulkUploadDocuments']);
+        Route::delete('/{id_history}', [DocumentController::class, 'deleteDocument']);
         Route::get('/getFile/{id_history}', [DocumentController::class, 'getFile']);
         Route::get('/', [DocumentController::class, 'getAllDocuments']);
         Route::post('/', [DocumentController::class, 'createDocument']);
