@@ -37,7 +37,7 @@ class AuthController extends Controller
                 'state' => $user->state,
                 'id_company' => $user->id_company,
                 'name_company' => $company->name ?? null,
-                'type_company' => $company->typ ?? null
+                'type_company' => $company->type ?? null
             ])->fromUser($user);
         } catch (JWTException $e) {
             return response()->json(['message' => 'Error al generar el token', 'status' => false], 500);
