@@ -116,7 +116,6 @@ class UserController extends Controller
     public function deleteUser($identification)
     {
         try {
-
             User::where('identification', $identification)->delete();
 
             return response()->json(['status' => true, 'message' => 'Registro eliminado exitosamente']);

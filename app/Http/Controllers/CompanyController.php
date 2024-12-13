@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Document;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -46,8 +48,37 @@ class CompanyController extends Controller
                 'country' => $request->country,
                 'phone' => $request->phone,
             ]);
-            return response()->json(['status' => true, 'message' => 'Registro exitoso']);
+            return response()->json(['status' => true, 'message' => 'Actualización exitosa']);
         } catch (\Throwable $th) {
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
+            }
+        }
+    }
+
+    public function deleteCompany($id_company)
+    {
+        DB::beginTransaction();
+        try {
+            $documents = Document::select('documents.path')
+                ->join('customers AS c', 'documents.identification', 'c.identification')
+                ->where('c.id_company', $id_company)
+                ->get();
+
+            for ($i = 0; $i < count($documents); $i++) {
+                $fullPath = storage_path('app/public/' . $documents[$i]->path);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath); // Elimina el archivo
+                }
+            }
+
+            Company::where('id_company', $id_company)->delete();
+            DB::commit();
+            return response()->json(['status' => true, 'message' => 'Eliminación exitosa']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
             if ($th->getMessage() !== null) {
                 return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
             } else {

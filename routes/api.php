@@ -18,6 +18,7 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
     Route::group([
         'prefix' => 'company',
     ], function () {
+        Route::delete('/{id_company}', [CompanyController::class, 'deleteCompany']);
         Route::get('/', [CompanyController::class, 'getAllCompanies']);
         Route::post('/', [CompanyController::class, 'createCompany']);
         Route::put('/', [CompanyController::class, 'updateCompany']);
@@ -26,6 +27,7 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
     Route::group([
         'prefix' => 'customer',
     ], function () {
+        Route::delete('/{identification}', [CustomerController::class, 'deleteCustomer']);
         Route::get('/', [CustomerController::class, 'getAllCustomers']);
         Route::post('/', [CustomerController::class, 'createCustomer']);
         Route::put('/', [CustomerController::class, 'updateCustomer']);
@@ -35,7 +37,7 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
         'prefix' => 'user',
     ], function () {
         Route::get('/getAllRankingUsers', [UserController::class, 'getAllRankingUsers']);
-        Route::delete('/{identification}', [DocumentController::class, 'deleteUser']);
+        Route::delete('/{identification}', [UserController::class, 'deleteUser']);
         Route::get('/', [UserController::class, 'getAllUsers']);
         Route::post('/', [UserController::class, 'createUser']);
         Route::put('/', [UserController::class, 'updateUser']);
