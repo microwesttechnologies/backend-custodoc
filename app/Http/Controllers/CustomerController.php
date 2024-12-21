@@ -42,7 +42,7 @@ class CustomerController extends Controller
 
             $data = $request->all();
 
-            if ($userAuth->id_rol !== 1) {
+            if ($userAuth->id_rol !== 1 && $userAuth->id_rol !== 4) {
                 $data['id_company'] = $userAuth->id_company;
             }
 

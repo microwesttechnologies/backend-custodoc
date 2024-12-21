@@ -38,9 +38,9 @@ class GlobalController extends Controller
 
         if ($user->id_rol !== 4) {
             $detail['users'] = ['label' => 'Empleados', 'amount' => $queryUsers->count(), 'icon' => 'fa-building-user'];
-            $detail['customers'] = ['label' => 'Clientes', 'amount' => $queryCustomers->count(), 'icon' => 'fa-users'];
         }
 
+        $detail['customers'] = ['label' => 'Clientes', 'amount' => $queryCustomers->count(), 'icon' => 'fa-users'];
         $detail['documents'] = ['label' => 'Documentos', 'amount' => $queryDocuments->count(), 'icon' => 'fa-folder-open'];
 
         return $detail;
