@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
+use App\Models\TypesDocument;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +14,20 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    public function getUserProfile()
+    {
+        $userAuth = Auth::user();
+
+        $company = Company::where('id_company', $userAuth->id_company)->first();
+        $typeDocument = TypesDocument::where('id_document', $userAuth->id_document)->first();
+
+        $userAuth['name_type_document'] = $typeDocument->name ?? null;
+        $userAuth['name_company'] = $company->name ?? null;
+        $userAuth['type_company'] = $company->type ?? null;
+
+        return response()->json($userAuth);
+    }
+
     public function getAllUsers()
     {
 
@@ -27,7 +43,6 @@ class UserController extends Controller
             ->join('roles AS r', 'users.id_rol', 'r.id_rol')
             ->where('users.id_rol', '!=', 1)
             ->orderBy('created_at', 'DESC');
-
 
         if ($userAuth->id_rol !== 1) {
             $queryUser->where('users.id_company', $userAuth->id_company);
@@ -97,7 +112,7 @@ class UserController extends Controller
         }
     }
 
-    public function getAllRankingUsers()
+    public function getAllRankingUsers(Request $request)
     {
 
         $queryRankingUser = User::select([
@@ -110,6 +125,14 @@ class UserController extends Controller
             ->Join('documents AS d', 'users.identification', 'd.user_identification')
             ->groupBy('users.identification', 'c.name', 'users.name');
 
+        // Obtener el valor del queryParam "rangeDates"
+        $rangeDates = $request->query('rangeDates');
+
+        if ($rangeDates) {
+            $rangeDates = explode(',', $rangeDates);
+            $queryRankingUser->whereBetween('d.created_at', [$rangeDates[0], $rangeDates[1]]);
+        }
+
         return response()->json($queryRankingUser->get());
     }
 
@@ -119,6 +142,27 @@ class UserController extends Controller
             User::where('identification', $identification)->delete();
 
             return response()->json(['status' => true, 'message' => 'Registro eliminado exitosamente']);
+        } catch (\Throwable $th) {
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
+            }
+        }
+    }
+
+    public function updatePassword(Request $request)
+    {
+        try {
+            $userAuth = Auth::user();
+
+            $user = User::where('email', $userAuth->email)->first();
+
+            // Restablecer la contraseña
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            return response()->json(['message' => 'Contraseña actualizada correctamente.', 'status' => true]);
         } catch (\Throwable $th) {
             if ($th->getMessage() !== null) {
                 return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);

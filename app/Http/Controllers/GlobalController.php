@@ -14,10 +14,10 @@ class GlobalController extends Controller
 {
     public function getDetailCompany()
     {
-        $user = Auth::user();
+        $userAuth = Auth::user();
         $detail = [];
 
-        if ($user->id_rol === 1) {
+        if ($userAuth->id_rol === 1) {
             $detail['company'] = ['label' => 'Compañías', 'amount' => Company::where('id_company', '!=', '1')->count(), 'icon' => 'fa-building'];
         }
 
@@ -25,18 +25,18 @@ class GlobalController extends Controller
         $queryDocuments = Document::query();
         $queryUsers = User::query();
 
-        if ($user->id_rol === 1) {
+        if ($userAuth->id_rol === 1) {
             $queryUsers->where('id_rol', '!=', 1);
         }
 
-        if ($user->id_rol === 2) {
-            $queryUsers->where('id_company', $user->id_company);
-            $queryCustomers->where('id_company', $user->id_company);
+        if ($userAuth->id_rol === 2) {
+            $queryUsers->where('id_company', $userAuth->id_company);
+            $queryCustomers->where('id_company', $userAuth->id_company);
             $queryDocuments->join('customers AS c', 'documents.identification', 'c.identification')
-                ->where('c.id_company', $user->id_company);
+                ->where('c.id_company', $userAuth->id_company);
         }
 
-        if ($user->id_rol !== 4) {
+        if ($userAuth->id_rol !== 4) {
             $detail['users'] = ['label' => 'Empleados', 'amount' => $queryUsers->count(), 'icon' => 'fa-building-user'];
         }
 

@@ -11,11 +11,11 @@ class RoutesController extends Controller
     public function getRoutesByRole()
     {
         // Obtener el rol del usuario autenticado
-        $userRoleId = Auth::user()->id_rol; // Cambia esto según tu relación de usuario y roles
+        $userAuth = Auth::user();
 
         // Obtener los IDs de las rutas permitidas para este rol
         $allowedRouteIds = DB::table('roles_routes')
-            ->where('id_rol', $userRoleId)
+            ->where('id_rol', $userAuth->id_rol)
             ->pluck('id_route')
             ->toArray();
 
@@ -25,7 +25,7 @@ class RoutesController extends Controller
         // Construir la jerarquía de rutas
         $menu = $this->buildRoutesHierarchy($routes);
 
-        return response()->json(['menu' => $menu, 'allowedRouteIds' => $allowedRouteIds]);
+        return response()->json(['menu' => $menu, 'allowedRouteIds' => $allowedRouteIds, 'user' => $userAuth]);
     }
 
     private function buildRoutesHierarchy($routes)

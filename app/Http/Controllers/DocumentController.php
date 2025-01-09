@@ -10,16 +10,24 @@ use Illuminate\Support\Facades\DB;
 
 class DocumentController extends Controller
 {
-    public function getAllDocuments()
+    public function getAllDocuments(Request $request)
     {
-        $user = Auth::user();
+        $userAuth = Auth::user();
 
         $queryDocuments = Document::select('documents.*', 'c.name AS name_customer')
             ->join('customers AS c', 'documents.identification', 'c.identification')
             ->orderBy('created_at', 'DESC');
 
-        if ($user->id_rol !== 1) {
-            $queryDocuments->where('id_company', $user->id_company);
+        if ($userAuth->id_rol !== 1 && $userAuth->id_rol !== 4) {
+            $queryDocuments->where('id_company', $userAuth->id_company);
+        }
+
+        // Obtener el valor del queryParam "rangeDates"
+        $rangeDates = $request->query('rangeDates');
+
+        if ($rangeDates) {
+            $rangeDates = explode(',', $rangeDates);
+            $queryDocuments->whereBetween('documents.created_at', [$rangeDates[0], $rangeDates[1]]);
         }
 
         return response()->json($queryDocuments->get());
@@ -32,12 +40,12 @@ class DocumentController extends Controller
         $filePath = "";
         try {
             $global = new GlobalController();
-            $user = Auth::user();
+            $userAuth = Auth::user();
             $filePath = $global->uploadFile($request->file('file'), 'documents');
 
             $document = [
                 'path' => $filePath,
-                'user_identification' => $user->identification,
+                'user_identification' => $userAuth->identification,
                 'identification' => $request->identification,
                 'description' => $request->description,
                 'name' => $request->name,
@@ -73,7 +81,7 @@ class DocumentController extends Controller
 
         try {
             $global = new GlobalController();
-            $user = Auth::user();
+            $userAuth = Auth::user();
 
             foreach ($request->documents as $documentData) {
                 // Sube el archivo y guarda la ruta
@@ -83,7 +91,7 @@ class DocumentController extends Controller
                 // Crea el registro en la base de datos
                 $document = [
                     'path' => $filePath,
-                    'user_identification' => $user->identification,
+                    'user_identification' => $userAuth->identification,
                     'identification' => $documentData['identification'],
                     'description' => $documentData['description'],
                     'name' => $documentData['name'],
@@ -129,11 +137,19 @@ class DocumentController extends Controller
         return response()->json([], 404);
     }
 
-    public function getAllDocumentsByCustomer($id_customer)
+    public function getAllDocumentsByCustomer($id_customer, Request $request)
     {
-        $documentsByCustomer = Document::where('identification', $id_customer)->get();
+        $queryDocumentsByCustomer = Document::where('identification', $id_customer);
 
-        return response()->json($documentsByCustomer);
+        // Obtener el valor del queryParam "rangeDates"
+        $rangeDates = $request->query('rangeDates');
+
+        if ($rangeDates) {
+            $rangeDates = explode(',', $rangeDates);
+            $queryDocumentsByCustomer->whereBetween('created_at', [$rangeDates[0], $rangeDates[1]]);
+        }
+
+        return response()->json($queryDocumentsByCustomer->get());
     }
 
     public function deleteDocument($id_history)

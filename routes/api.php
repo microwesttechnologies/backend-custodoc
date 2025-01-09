@@ -12,6 +12,9 @@ use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\LogRequest;
 
+Route::post('/validateIfTokenIsValid', [AuthController::class, 'validateIfTokenIsValid']);
+Route::post('/sendLinkResetPassword', [AuthController::class, 'sendLinkResetPassword']);
+Route::post('/resetPassword', [AuthController::class, 'resetPassword']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () {
@@ -38,6 +41,8 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
     ], function () {
         Route::get('/getAllRankingUsers', [UserController::class, 'getAllRankingUsers']);
         Route::delete('/{identification}', [UserController::class, 'deleteUser']);
+        Route::get('/getUserProfile', [UserController::class, 'getUserProfile']);
+        Route::put('/updatePassword', [UserController::class, 'updatePassword']);
         Route::get('/', [UserController::class, 'getAllUsers']);
         Route::post('/', [UserController::class, 'createUser']);
         Route::put('/', [UserController::class, 'updateUser']);
