@@ -36,7 +36,7 @@
             padding: 16px;
         ">
 
-            <img src="{{asset('storage/emails/LogoWhite1.png')}}" style="
+            <img src="{{asset('public/storage/emails/LogoWhite1.png')}}" style="
                 width: 120px;
             ">
 
@@ -55,7 +55,7 @@
             padding: 32px;
             margin: 0 auto;
         ">
-            <img src="{{asset('storage/emails/ResetPassword.png')}}" alt="ResetPassword" style="
+            <img src="{{asset('public/storage/emails/ResetPassword.png')}}" alt="ResetPassword" style="
                 margin-bottom: 50px;
                 width: 250px;
             ">
@@ -85,7 +85,7 @@
                 Has recibido este mensaje de parte de:
             </p>
 
-            <img src="{{asset('storage/emails/LogoBlue1.png')}}" style="
+            <img src="{{asset('public/storage/emails/LogoBlue1.png')}}" style="
                 width: 150px;
             ">
         </div>
