@@ -86,6 +86,8 @@ class UserController extends Controller
     {
         try {
 
+            $userAuth = Auth::user();
+
             $user  = User::where([
                 ['email', $request->email],
                 ['identification', '!=', $request->identification]
@@ -95,13 +97,19 @@ class UserController extends Controller
                 return response()->json(['status' => false, 'message' => 'El email ya se encuentra registrado']);
             }
 
-            User::where('identification', $request->identification)->update([
-                'id_company' => $request->id_company,
-                'id_rol' => $request->id_rol,
+            $dataToUpdate = [
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'name' => $request->name,
-            ]);
+            ];
+
+            if ($userAuth->id_rol === 1) {
+                $dataToUpdate['id_company'] = $request->id_company;
+                $dataToUpdate['id_rol'] = $request->id_rol;
+            }
+
+            User::where('identification', $request->identification)->update($dataToUpdate);
+
             return response()->json(['status' => true, 'message' => 'Registro exitoso']);
         } catch (\Throwable $th) {
             if ($th->getMessage() !== null) {

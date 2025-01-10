@@ -61,6 +61,8 @@ class CustomerController extends Controller
     {
         try {
 
+            $userAuth = Auth::user();
+
             $customer  = Customer::where([
                 ['email', $request->email],
                 ['identification', '!=', $request->identification]
@@ -70,12 +72,17 @@ class CustomerController extends Controller
                 return response()->json(['status' => false, 'message' => 'El email ya se encuentra registrado']);
             }
 
-            Customer::where('identification', $request->identification)->update([
-                'id_company' => $request->id_company,
+            $dataToUpdate = [
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'name' => $request->name,
-            ]);
+            ];
+
+            if ($userAuth->id_rol === 1) {
+                $dataToUpdate['id_company'] = $request->id_company;
+            }
+
+            Customer::where('identification', $request->identification)->update($dataToUpdate);
             return response()->json(['status' => true, 'message' => 'Registro exitoso']);
         } catch (\Throwable $th) {
             if ($th->getMessage() !== null) {
