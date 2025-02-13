@@ -45,7 +45,7 @@ class GlobalController extends Controller
         return $detail;
     }
 
-    public function uploadFile($file, $dirPath)
+    public function uploadOrUpdateFile($file, $dirPath, $oldFilePath = null)
     {
         // Definir la ruta completa donde se guardará el archivo (dentro de storage/app/public)
         $path = storage_path('app/public/' . $dirPath);
@@ -53,6 +53,14 @@ class GlobalController extends Controller
         // Verificar si la carpeta existe, si no, crearla con permisos
         if (!File::exists($path)) {
             File::makeDirectory($path, 0755, true); // Crear directorio con permisos 0755, true para crear subdirectorios
+        }
+
+        // Eliminar el archivo anterior si se proporciona una ruta y el archivo existe
+        if ($oldFilePath) {
+            $oldFileFullPath = storage_path('app/public/' . $oldFilePath);
+            if (File::exists($oldFileFullPath)) {
+                File::delete($oldFileFullPath); // Eliminar el archivo
+            }
         }
 
         // Definir un nombre único para el archivo para evitar colisiones

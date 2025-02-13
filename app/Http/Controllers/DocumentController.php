@@ -12,7 +12,6 @@ class DocumentController extends Controller
 {
     public function getAllDocuments(Request $request)
     {
-        DB::enableQueryLog();
         $userAuth = Auth::user();
 
         $queryDocuments = Document::select('documents.*', 'c.name AS name_customer')
@@ -30,7 +29,6 @@ class DocumentController extends Controller
             });
         }
 
-        // Obtener el valor del queryParam "rangeDates"
         $rangeDates = $request->query('rangeDates');
 
         if ($rangeDates) {
@@ -84,35 +82,30 @@ class DocumentController extends Controller
         return response()->json($queryDocuments->get());
     }
 
-    public function createDocument(Request $request)
+    public function createOrUpdateDocument(Request $request)
     {
 
         DB::beginTransaction();
-        $filePath = "";
+
+        $response = [];
         try {
-            $global = new GlobalController();
-            $userAuth = Auth::user();
-            $filePath = $global->uploadFile($request->file('file'), 'documents');
 
-            $document = [
-                'user_identification' => $userAuth->identification,
-                'identification' => $request->identification,
-                'description' => $request->description,
-                'id_folder' => $request->id_folder,
-                'name' => $request->name,
-                'path' => $filePath,
-            ];
-
-            Document::create($document);
+            if ($request->id_history) {
+                $response = $this->updateDocument($request);
+            } else {
+                $response = $this->createDocument($request);
+            }
 
             DB::commit();
-            return response()->json(['status' => true, 'message' => 'Registro exitoso']);
+            return response()->json($response);
         } catch (\Throwable $th) {
             DB::rollBack();
-            // Eliminar los archivos que se subieron antes del error
-            $fullPath = storage_path('app/public/' . $filePath);
-            if (file_exists($fullPath)) {
-                unlink($fullPath); // Elimina el archivo
+            if (isset($response['filePath'])) {
+                // Eliminar los archivos que se subieron antes del error
+                $fullPath = storage_path('app/public/' . $response['filePath']);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath); // Elimina el archivo
+                }
             }
 
             if ($th->getMessage() !== null) {
@@ -121,6 +114,47 @@ class DocumentController extends Controller
                 return response()->json(['status' => false, 'message' => $th]);
             }
         }
+    }
+
+    private function createDocument(Request $request)
+    {
+        $global = new GlobalController();
+        $userAuth = Auth::user();
+        $filePath = $global->uploadOrUpdateFile($request->file('file'), 'documents');
+
+        $document = [
+            'user_identification' => $userAuth->identification,
+            'identification' => $request->identification,
+            'description' => $request->description,
+            'id_folder' => $request->id_folder,
+            'name' => $request->name,
+            'path' => $filePath,
+        ];
+
+        Document::create($document);
+
+        return ['status' => true, 'message' => 'Registro exitoso', 'filePath' => $filePath];
+    }
+
+    private function updateDocument(Request $request)
+    {
+
+        $filePath = "";
+        $global = new GlobalController();
+
+        $document = [
+            'description' => $request->description,
+            'name' => $request->name,
+        ];
+
+        if ($request->hasFile('file')) {
+            $filePath = $global->uploadOrUpdateFile($request->file('file'), 'documents', $request->path);
+            $document['path'] = $filePath;
+        }
+
+        Document::where('id_history',$request->id_history)->update($document);
+
+        return ['status' => true, 'message' => 'Documento actualizado exitosamente', 'filePath' => $filePath];
     }
 
     public function bulkUploadDocuments(Request $request)
@@ -137,7 +171,7 @@ class DocumentController extends Controller
 
             foreach ($request->documents as $documentData) {
                 // Sube el archivo y guarda la ruta
-                $filePath = $global->uploadFile($documentData['file'], 'documents');
+                $filePath = $global->uploadOrUpdateFile($documentData['file'], 'documents');
                 $uploadedFiles[] = $filePath;
 
                 // Crea el registro en la base de datos

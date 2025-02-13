@@ -17,7 +17,7 @@ class CompanyController extends Controller
 
         $userAuth = Auth::user();
 
-        $companiesQuery = Company::where('id_company', '!=', '1')->orderBy('created_at', 'DESC');
+        $companiesQuery = Company::orderBy('created_at', 'DESC');
 
         if ($userAuth->id_rol === 4) {
             $companiesQuery->where('type', 'IPS');

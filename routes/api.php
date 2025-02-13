@@ -66,8 +66,8 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
         Route::post('/bulkUploadDocuments', [DocumentController::class, 'bulkUploadDocuments']);
         Route::delete('/{id_history}', [DocumentController::class, 'deleteDocument']);
         Route::get('/getFile/{id_history}', [DocumentController::class, 'getFile']);
+        Route::post('/', [DocumentController::class, 'createOrUpdateDocument']);
         Route::get('/', [DocumentController::class, 'getAllDocuments']);
-        Route::post('/', [DocumentController::class, 'createDocument']);
     });
 
     Route::group([
