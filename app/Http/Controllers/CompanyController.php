@@ -2,23 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Company;
-use App\Models\Document;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Http\Request;
+use App\Models\Document;
+use App\Models\Company;
+use App\Models\Routes;
+use App\Models\Roles;
+use Illuminate\Support\Facades\Auth;
 
 class CompanyController extends Controller
 {
     public function getAllCompanies()
     {
-        $companies = Company::where('id_company', '!=', '1')->orderBy('created_at', 'DESC')->get();
-        return response()->json($companies);
+
+        $userAuth = Auth::user();
+
+        $companiesQuery = Company::where('id_company', '!=', '1')->orderBy('created_at', 'DESC');
+
+        if ($userAuth->id_rol === 4) {
+            $companiesQuery->where('type', 'IPS');
+        }
+
+        return response()->json($companiesQuery->get());
     }
 
     public function createCompany(Request $request)
     {
+        DB::beginTransaction();
         try {
             $company = Company::where('nit', $request->nit)->first();
 
@@ -26,9 +36,30 @@ class CompanyController extends Controller
                 return response()->json(['status' => false, 'message' => 'El nit ya se encuentra registrado']);
             }
 
-            Company::create($request->all());
-            return response()->json(['status' => true, 'message' => 'Registro exitoso']);
+            $company = Company::create($request->all());
+
+            if ($company->type !== 'IPS') {
+
+                $rol = Roles::create(['name' => 'Administrador', 'id_company' => $company->id_company, 'isDefault' => 1]);
+
+                $routes = Routes::where([['code', '!=', 'RANKING'], ['code', '!=', 'COMPANY']])->get();
+
+                foreach ($routes as $route) {
+                    DB::table('roles_routes')->insert([
+                        'id_rol' => $rol->id_rol,
+                        'id_route' => $route->id_route,
+                        'CREATE' => $route->CREATE,
+                        'UPDATE' => $route->UPDATE,
+                        'DELETE' => $route->DELETE,
+                        'EXPORT' => $route->EXPORT,
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return response()->json(['status' => true, 'message' => 'Compañía creada exitosamente']);
         } catch (\Throwable $th) {
+            DB::rollBack();
             if ($th->getMessage() !== null) {
                 return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
             } else {
@@ -48,7 +79,7 @@ class CompanyController extends Controller
                 'country' => $request->country,
                 'phone' => $request->phone,
             ]);
-            return response()->json(['status' => true, 'message' => 'Actualización exitosa']);
+            return response()->json(['status' => true, 'message' => 'Compañía actualizada exitosamente']);
         } catch (\Throwable $th) {
             if ($th->getMessage() !== null) {
                 return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
@@ -76,7 +107,7 @@ class CompanyController extends Controller
 
             Company::where('id_company', $id_company)->delete();
             DB::commit();
-            return response()->json(['status' => true, 'message' => 'Eliminación exitosa']);
+            return response()->json(['status' => true, 'message' => 'Compañía eliminada exitosamente']);
         } catch (\Throwable $th) {
             DB::rollBack();
             if ($th->getMessage() !== null) {

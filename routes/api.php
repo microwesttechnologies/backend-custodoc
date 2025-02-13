@@ -8,6 +8,8 @@ use App\Http\Controllers\GlobalController;
 use App\Http\Controllers\RoutesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FolderController;
+use App\Http\Controllers\RolesController;
 use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\LogRequest;
@@ -31,7 +33,7 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
         'prefix' => 'customer',
     ], function () {
         Route::delete('/{identification}', [CustomerController::class, 'deleteCustomer']);
-        Route::get('/', [CustomerController::class, 'getAllCustomers']);
+        Route::get('/{id_company?}', [CustomerController::class, 'getAllCustomers']);
         Route::post('/', [CustomerController::class, 'createCustomer']);
         Route::put('/', [CustomerController::class, 'updateCustomer']);
     });
@@ -43,7 +45,7 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
         Route::delete('/{identification}', [UserController::class, 'deleteUser']);
         Route::get('/getUserProfile', [UserController::class, 'getUserProfile']);
         Route::put('/updatePassword', [UserController::class, 'updatePassword']);
-        Route::get('/', [UserController::class, 'getAllUsers']);
+        Route::get('/{id_company?}', [UserController::class, 'getAllUsers']);
         Route::post('/', [UserController::class, 'createUser']);
         Route::put('/', [UserController::class, 'updateUser']);
     });
@@ -58,6 +60,9 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
         'prefix' => 'document',
     ], function () {
         Route::get('/getAllDocumentsByCustomer/{id_customer}', [DocumentController::class, 'getAllDocumentsByCustomer']);
+        Route::get('/getDocumentsByFolder/{id_folder}', [DocumentController::class, 'getDocumentsByFolder']);
+        Route::get('/markAndDesmarkFavorite', [DocumentController::class, 'markAndDesmarkFavorite']);
+        Route::get('/restoreDocument/{id_history}', [DocumentController::class, 'restoreDocument']);
         Route::post('/bulkUploadDocuments', [DocumentController::class, 'bulkUploadDocuments']);
         Route::delete('/{id_history}', [DocumentController::class, 'deleteDocument']);
         Route::get('/getFile/{id_history}', [DocumentController::class, 'getFile']);
@@ -65,7 +70,39 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
         Route::post('/', [DocumentController::class, 'createDocument']);
     });
 
+    Route::group([
+        'prefix' => 'folder',
+    ], function () {
+        Route::get('/getFoldersByParent/{parent}', [FolderController::class, 'getFoldersByParent']);
+        Route::get('/restoreFolder/{id_folder}', [FolderController::class, 'restoreFolder']);
+        Route::delete('/{id_folder}', [FolderController::class, 'deleteFolder']);
+        Route::post('/', [FolderController::class, 'createFolder']);
+        Route::put('/', [FolderController::class, 'updateFolder']);
+    });
+
+    Route::group([
+        'prefix' => 'routes',
+    ], function () {
+        Route::get('/getRoutesAndPermissions', [RoutesController::class, 'getRoutesAndPermissions']);
+        Route::get('/getRoutesByRole', [RoutesController::class, 'getRoutesByRole']);
+    });
+
+    Route::group([
+        'prefix' => 'roles',
+    ], function () {
+        Route::get('/getRolesByCompany/{id_company?}', [RolesController::class, 'getRolesByCompany']);
+        Route::get('/getRolesAndPermissions', [RolesController::class, 'getRolesAndPermissions']);
+        Route::post('/', [RolesController::class, 'createRol']);
+        Route::put('/', [RolesController::class, 'updateRol']);
+    });
+
     Route::get('getDetailCompany', [GlobalController::class, 'getDetailCompany']);
-    Route::get('getRoutesByRole', [RoutesController::class, 'getRoutesByRole']);
     Route::get('logout', [AuthController::class, 'logout']);
+});
+
+Route::get('/test-time', function () {
+    return response()->json([
+        'now' => now()->toDateTimeString(),
+        'timezone' => config('app.timezone'),
+    ]);
 });

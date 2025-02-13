@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
 {
-    public function getAllCustomers()
+    public function getAllCustomers($id_company = null)
     {
+        $userAuth = Auth::user();
+
         $queryCustomers = Customer::select([
             'customers.*',
             'co.name AS name_company',
@@ -20,10 +22,12 @@ class CustomerController extends Controller
             ->join('types_document AS td', 'customers.id_document', 'td.id_document')
             ->orderBy('created_at', 'DESC');
 
-        $userAuth = Auth::user();
+        if (($userAuth->id_rol !== 1 && $userAuth->id_rol !== 4) || $id_company) {
+            $queryCustomers->where('customers.id_company', $id_company ?? $userAuth->id_company);
+        }
 
-        if ($userAuth->id_rol !== 1 && $userAuth->id_rol !== 4) {
-            $queryCustomers->where('customers.id_company', $userAuth->id_company);
+        if ($userAuth->id_rol === 4) {
+            $queryCustomers->where('co.type', 'IPS');
         }
 
         return response()->json($queryCustomers->get());

@@ -17,6 +17,10 @@ class Routes extends Model
         'name',
         'icon',
         'parent',
-        'path'
+        'path',
+        'CREATE',
+        'UPDATE',
+        'DELETE',
+        'EXPORT',
     ];
 }

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Company;
-use App\Models\TypesDocument;
-use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use App\Models\TypesDocument;
+use Illuminate\Http\Request;
+use App\Models\Company;
+use App\Models\Roles;
+use App\Models\User;
 
 
 class UserController extends Controller
@@ -20,15 +20,17 @@ class UserController extends Controller
 
         $company = Company::where('id_company', $userAuth->id_company)->first();
         $typeDocument = TypesDocument::where('id_document', $userAuth->id_document)->first();
+        $rol = Roles::where('id_rol', $userAuth->id_rol)->first();
 
         $userAuth['name_type_document'] = $typeDocument->name ?? null;
         $userAuth['name_company'] = $company->name ?? null;
         $userAuth['type_company'] = $company->type ?? null;
+        $userAuth['name_rol'] = $rol->name ?? null;
 
         return response()->json($userAuth);
     }
 
-    public function getAllUsers()
+    public function getAllUsers($id_company = null)
     {
 
         $userAuth = Auth::user();
@@ -37,15 +39,16 @@ class UserController extends Controller
             'users.*',
             'c.name AS name_company',
             'td.name AS name_type_document',
-            'r.name AS name_rol'
+            'r.name AS name_rol',
+            'c.type AS type_company'
         ])->leftJoin('companies AS c', 'users.id_company', 'c.id_company')
             ->join('types_document AS td', 'users.id_document', 'td.id_document')
             ->join('roles AS r', 'users.id_rol', 'r.id_rol')
             ->where('users.id_rol', '!=', 1)
             ->orderBy('created_at', 'DESC');
 
-        if ($userAuth->id_rol !== 1) {
-            $queryUser->where('users.id_company', $userAuth->id_company);
+        if ($userAuth->id_rol !== 1 || $id_company) {
+            $queryUser->where('users.id_company', $id_company ?? $userAuth->id_company);
         }
 
         return response()->json($queryUser->get());
@@ -65,10 +68,12 @@ class UserController extends Controller
             $data = $request->all();
             $data['password'] = Hash::make($request->password);
 
-            if ($userAuth->id_rol === 2) {
+            if ($userAuth->id_rol !== 1) {
                 $data['id_company'] = $userAuth->id_company;
-                /** El adminsitrador de las empresas solo pueden crear empleados, el código es 3 */
-                $data['id_rol'] = 3;
+            }
+
+            if($data['id_company'] === 'IPS'){
+                unset($data['id_company']);
             }
 
             User::create($data);

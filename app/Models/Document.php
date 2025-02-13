@@ -18,6 +18,8 @@ class Document extends Model
         'identification',
         'name',
         'path',
-        'description'
+        'description',
+        'favorite',
+        'id_folder'
     ];
 }

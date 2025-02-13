@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Models\Company;
 use App\Models\Routes;
 
 class RoutesController extends Controller
@@ -13,57 +13,29 @@ class RoutesController extends Controller
         // Obtener el rol del usuario autenticado
         $userAuth = Auth::user();
 
-        // Obtener los IDs de las rutas permitidas para este rol
-        $allowedRouteIds = DB::table('roles_routes')
-            ->where('id_rol', $userAuth->id_rol)
-            ->pluck('id_route')
-            ->toArray();
+        $company = Company::where('id_company', $userAuth->id_company)->first();
 
         // Obtener todas las rutas relacionadas
-        $routes = Routes::whereIn('id_route', $allowedRouteIds)->get();
+        $routesQuery = Routes::select('routes.name', 'routes.code', 'routes.path', 'routes.order', 'routes.icon', 'routes.id_route', 'rr.CREATE', 'rr.UPDATE', 'rr.DELETE', 'rr.EXPORT')
+            ->join('roles_routes AS rr', 'routes.id_route', 'rr.id_route')
+            ->where('rr.id_rol', $userAuth->id_rol)
+            ->orderBy('routes.order', 'ASC');
 
-        // Construir la jerarquía de rutas
-        $menu = $this->buildRoutesHierarchy($routes);
-
-        return response()->json(['menu' => $menu, 'allowedRouteIds' => $allowedRouteIds, 'user' => $userAuth]);
-    }
-
-    private function buildRoutesHierarchy($routes)
-    {
-        $menu = [];
-
-        // Obtener las rutas principales (sin parent)
-        $parents = Routes::whereNull('parent')->get();
-
-        foreach ($parents as $parent) {
-            // Filtrar los hijos de cada ruta principal
-            $children = $routes->filter(function ($route) use ($parent) {
-                return $route->parent === $parent->id_route;
-            });
-
-            if (count($children) > 0) {
-
-
-                // Estructura del padre
-                $routeData = [
-                    'label' => $parent->name,
-                    'items' => [],
-                ];
-
-                // Agregar hijos si existen
-                foreach ($children as $child) {
-                    $routeData['items'][] = [
-                        'id' => $child->id_route,
-                        'label' => $child->name,
-                        'icon' => $child->icon,
-                        'path' => $child->path,
-                    ];
-                }
-
-                $menu[] = $routeData;
-            }
+        if ($company && $company->type === 'IPS') {
+            $routesQuery->where([
+                ['routes.code', '!=', 'TRASH'],
+                ['routes.code', '!=', 'ROLES']
+            ]);
         }
 
-        return $menu;
+        return response()->json($routesQuery->get());
+    }
+
+    public function getRoutesAndPermissions()
+    {
+        $routesAndPermissions = Routes::where([['code', '!=', 'COMPANY'], ['code', '!=', 'RANKING']])
+            ->get();
+
+        return response()->json($routesAndPermissions);
     }
 }
