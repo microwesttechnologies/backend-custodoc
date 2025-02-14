@@ -72,7 +72,7 @@ class UserController extends Controller
                 $data['id_company'] = $userAuth->id_company;
             }
 
-            if($data['id_company'] === 'IPS'){
+            if ($data['id_company'] === 'IPS') {
                 unset($data['id_company']);
             }
 
@@ -171,11 +171,20 @@ class UserController extends Controller
 
             $user = User::where('email', $userAuth->email)->first();
 
+            // Verificar que la contraseña actual coincida
+            if (!Hash::check($request->currentPassword, $user->password)) {
+                return response()->json([
+                    'message' => 'La contraseña actual es incorrecta.',
+                    'code' => 'INCORRECT_CURRENT_PASSWORD',
+                    'status' => false
+                ]);
+            }
+
             // Restablecer la contraseña
             $user->password = Hash::make($request->password);
             $user->save();
 
-            return response()->json(['message' => 'Contraseña actualizada correctamente.', 'status' => true]);
+            return response()->json(['status' => true, 'message' => 'Contraseña actualizada correctamente.']);
         } catch (\Throwable $th) {
             if ($th->getMessage() !== null) {
                 return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
