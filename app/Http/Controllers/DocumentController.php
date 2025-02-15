@@ -43,8 +43,8 @@ class DocumentController extends Controller
     {
         $userAuth = Auth::user();
 
-        $queryDocuments = Document::select('documents.*', 'c.name AS name_customer', DB::raw('IF(fd.identification, 1, 0) AS isFavorite'))
-            ->join('customers AS c', 'documents.identification', 'c.identification')
+        $queryDocuments = Document::select('documents.*', DB::raw('IF(fd.identification, 1, 0) AS isFavorite'))
+            ->join('users AS u', 'documents.user_identification', 'u.identification')
             ->where('id_company', $userAuth->id_company);
 
         if ($id_folder === 'null' && $request->query('isViewed') !== 'true') {
@@ -123,8 +123,8 @@ class DocumentController extends Controller
         $filePath = $global->uploadOrUpdateFile($request->file('file'), 'documents');
 
         $document = [
+            'identification' => $request->identification ?? null,
             'user_identification' => $userAuth->identification,
-            'identification' => $request->identification,
             'description' => $request->description,
             'id_folder' => $request->id_folder,
             'name' => $request->name,

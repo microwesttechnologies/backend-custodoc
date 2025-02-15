@@ -23,7 +23,13 @@ class FolderController extends Controller
 
         // return Cache::remember($cacheKey, 60, function () use ($parent, $request, $userAuth) {
 
-        $queryFolders = Folder::select('folders.*', DB::raw('IF(fd.identification, 1, 0) AS isFavorite'))
+        $concatWhereNotNull = $request->query('deleted') === 'true' ? 'IS NOT NULL' : 'IS NULL';
+
+        $queryFolders = Folder::select(
+            'folders.*',
+            DB::raw('IF(fd.identification, 1, 0) AS isFavorite'),
+            DB::raw("(SELECT COUNT(*) FROM documents AS d WHERE d.id_folder = folders.id_folder and d.deleted_at {$concatWhereNotNull}) AS fileCount")
+        )
             ->leftJoin('favorite_documents AS fd', function ($leftJoin) use ($userAuth) {
                 $leftJoin->on('fd.id_folder', 'folders.id_folder')
                     ->where('fd.identification', $userAuth->identification);
@@ -61,8 +67,6 @@ class FolderController extends Controller
                     ->orWhereIn('folders.id_folder', $documentsDeleted)
                     ->orWhereIn('folders.id_folder', $ancestorFolders);
             })->orderBy('folders.deleted_at', 'DESC');
-
-
         } else {
             $queryFolders->whereNull('folders.deleted_at')
                 ->orderBy('folders.created_at', 'DESC');
