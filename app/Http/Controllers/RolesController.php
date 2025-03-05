@@ -15,7 +15,7 @@ class RolesController extends Controller
     {
         $company = Company::where('id_company', $id_company)->first();
 
-        $rolesQuery = Roles::where([['id_company', $company->type === 'IPS' ? null : $id_company], ['id_rol', '!=', '1']]);
+        $rolesQuery = Roles::where([['id_company', isset($company) && $company->type === 'IPS' ? null : $id_company], ['id_rol', '!=', '1']]);
 
         $rolesQuery->where('id_rol', '!=', '4');
 

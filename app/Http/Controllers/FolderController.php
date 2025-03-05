@@ -36,9 +36,11 @@ class FolderController extends Controller
             })->where('folders.id_company', $userAuth->id_company);
 
         // Filtro por padre
-        if ($parent === 'null') {
+        if ($parent === 'null' && $request->query('isFavorite') !== 'true' && !$request->query('search')) {
             $queryFolders->whereNull('folders.parent');
-        } else {
+        }
+
+        if ($parent !== 'null') {
             $queryFolders->where('folders.parent', $parent);
         }
 
@@ -72,42 +74,23 @@ class FolderController extends Controller
                 ->orderBy('folders.created_at', 'DESC');
         }
 
-        // Filtro por favoritos
+        /** Filtro para favoritos */
         if ($request->query('isFavorite') === 'true') {
-            $favoriteFolders = Folder::select('folders.parent')
-                ->join('favorite_documents AS fd', function ($join) use ($userAuth,) {
-                    $join->on('fd.id_folder', DB::raw('folders.id_folder'))
-                        ->where('fd.identification', DB::raw($userAuth->identification));
-                })->whereNotNull('folders.parent')
-                ->distinct();
+            $queryFolders->whereNotNull('fd.id_folder');
+        }
 
-            $favoriteDocuments = Document::select('documents.id_folder')
-                ->join('favorite_documents AS fd', function ($join) use ($userAuth,) {
-                    $join->on('fd.id_history', DB::raw('documents.id_history'))
-                        ->where('fd.identification', DB::raw($userAuth->identification));
-                })->whereNotNull('documents.id_folder')
-                ->distinct();
-
-            $ancestorFolders = Folder::select('folders.id_folder')
-                ->whereIn('folders.id_folder', function ($query) use ($favoriteFolders, $favoriteDocuments) {
-                    $query->select('parent')
-                        ->from('folders')
-                        ->whereIn('folders.id_folder', $favoriteFolders)
-                        ->orWhereIn('folders.id_folder', $favoriteDocuments);
-                });
-
-            $queryFolders->where(function ($where) use ($favoriteFolders, $favoriteDocuments, $ancestorFolders) {
-                $where->whereNotNull('fd.identification')
-                    ->orWhereIn('folders.id_folder', $favoriteFolders)
-                    ->orWhereIn('folders.id_folder', $favoriteDocuments)
-                    ->orWhereIn('folders.id_folder', $ancestorFolders);
+        if ($userAuth->id_area !== 1) {
+            $queryFolders->where(function ($where) use ($userAuth) {
+                $where->whereIn('folders.id_area', [$userAuth->id_area, 1]);
             });
         }
 
-        // $queryFolders->get();
+        $search = $request->query('search');
+        if ($search) {
+            $queryFolders->where('folders.name', 'LIKE', "%{$search}%");
+        }
+
         return response()->json($queryFolders->get());
-        // return response()->json(DB::getQueryLog());
-        // });
     }
 
     public function createFolder(Request $request)
@@ -120,6 +103,7 @@ class FolderController extends Controller
                 'identification' => $userAuth->identification,
                 'id_company' => $userAuth->id_company,
                 'parent' => $request->parent ?? null,
+                'id_area' => $request->id_area,
                 'name' => $request->name,
             ];
 
@@ -209,6 +193,45 @@ class FolderController extends Controller
 
         foreach ($folders as $folder) {
             $this->deleteFoldersAndDocuments($userAuth, $folder->id_folder, $temporal);
+        }
+    }
+
+    public function deleteFoldersAndDocumentsById(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+
+            $userAuth = Auth::user();
+            $temporal = $request->query('temporal');
+
+            foreach ($request->folders as $id_folder) {
+                $this->deleteFoldersAndDocuments($userAuth, $id_folder, $temporal);
+            }
+
+            foreach ($request->documents as $id_history) {
+                if ($temporal === 'true') {
+                    Document::where('id_history', $id_history)->update(['deleted_at' => now()]);
+                } else {
+                    $document = Document::where('id_history', $id_history)->first();
+                    if ($document) {
+                        Document::where('id_history', $id_history)->delete();
+                        $fullPath = storage_path('app/public/' . $document->path);
+                        if (file_exists($fullPath)) {
+                            unlink($fullPath); // Elimina el archivo
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+            return response()->json(['status' => true, 'message' => 'Carpeta eliminada exitosamente']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
+            }
         }
     }
 

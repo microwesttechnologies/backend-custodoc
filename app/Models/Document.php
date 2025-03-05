@@ -20,6 +20,7 @@ class Document extends Model
         'path',
         'description',
         'favorite',
+        'id_area',
         'id_folder'
     ];
 }

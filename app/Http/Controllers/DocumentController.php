@@ -45,9 +45,13 @@ class DocumentController extends Controller
 
         $queryDocuments = Document::select('documents.*', DB::raw('IF(fd.identification, 1, 0) AS isFavorite'))
             ->join('users AS u', 'documents.user_identification', 'u.identification')
-            ->where('id_company', $userAuth->id_company);
+            ->leftJoin('favorite_documents AS fd', function ($leftJoin) use ($userAuth) {
+                $leftJoin->on('fd.id_history', 'documents.id_history')
+                    ->where('fd.identification', $userAuth->identification);
+            })
+            ->where('u.id_company', $userAuth->id_company);
 
-        if ($id_folder === 'null' && $request->query('isViewed') !== 'true') {
+        if ($id_folder === 'null' && $request->query('isViewed') !== 'true' && $request->query('isFavorite') !== 'true' && !$request->query('search')) {
             $queryDocuments->whereNull('documents.id_folder');
         }
 
@@ -64,19 +68,24 @@ class DocumentController extends Controller
         }
 
         if ($request->query('isFavorite') === 'true') {
-            $queryDocuments->join('favorite_documents AS fd', function ($join) use ($userAuth) {
-                $join->on('fd.id_history', 'documents.id_history')->where('fd.identification', $userAuth->identification);
-            });
-        } else {
-            $queryDocuments->leftJoin('favorite_documents AS fd', function ($leftJoin) use ($userAuth) {
-                $leftJoin->on('fd.id_history', 'documents.id_history')->where('fd.identification', $userAuth->identification);
-            });
+            $queryDocuments->whereNotNull('fd.id_history');
         }
 
         if ($request->query('isViewed') === 'true') {
             $queryDocuments->join('recently_viewed AS rv', function ($join) use ($userAuth) {
                 $join->on('rv.id_history', 'documents.id_history')->where('rv.identification', $userAuth->identification);
             });
+        }
+
+        if ($userAuth->id_area !== 1) {
+            $queryDocuments->where(function ($where) use ($userAuth) {
+                $where->whereIn('documents.id_area', [$userAuth->id_area, 1]);
+            });
+        }
+
+        $search = $request->query('search');
+        if ($search) {
+            $queryDocuments->where('documents.name', 'LIKE', "%{$search}%");
         }
 
         return response()->json($queryDocuments->get());
@@ -127,6 +136,7 @@ class DocumentController extends Controller
             'user_identification' => $userAuth->identification,
             'description' => $request->description,
             'id_folder' => $request->id_folder,
+            'id_area' => $request->id_area,
             'name' => $request->name,
             'path' => $filePath,
         ];
@@ -152,7 +162,7 @@ class DocumentController extends Controller
             $document['path'] = $filePath;
         }
 
-        Document::where('id_history',$request->id_history)->update($document);
+        Document::where('id_history', $request->id_history)->update($document);
 
         return ['status' => true, 'message' => 'Documento actualizado exitosamente', 'filePath' => $filePath];
     }

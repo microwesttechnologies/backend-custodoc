@@ -6,10 +6,11 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\GlobalController;
 use App\Http\Controllers\RoutesController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\RolesController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AreaController;
 use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\LogRequest;
@@ -73,6 +74,7 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
     Route::group([
         'prefix' => 'folder',
     ], function () {
+        Route::post('/deleteFoldersAndDocumentsById', [FolderController::class, 'deleteFoldersAndDocumentsById']);
         Route::get('/getFoldersByParent/{parent}', [FolderController::class, 'getFoldersByParent']);
         Route::get('/restoreFolder/{id_folder}', [FolderController::class, 'restoreFolder']);
         Route::delete('/{id_folder}', [FolderController::class, 'deleteFolder']);
@@ -94,6 +96,14 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
         Route::get('/getRolesAndPermissions', [RolesController::class, 'getRolesAndPermissions']);
         Route::post('/', [RolesController::class, 'createRol']);
         Route::put('/', [RolesController::class, 'updateRol']);
+    });
+
+    Route::group([
+        'prefix' => 'areas',
+    ], function () {
+        Route::get('/{id_company?}', [AreaController::class, 'getAllAreas']);
+        Route::post('/', [AreaController::class, 'createArea']);
+        Route::put('/', [AreaController::class, 'updateArea']);
     });
 
     Route::get('getDetailCompany', [GlobalController::class, 'getDetailCompany']);

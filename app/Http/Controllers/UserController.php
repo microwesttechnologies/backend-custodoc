@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Area;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -21,11 +22,15 @@ class UserController extends Controller
         $company = Company::where('id_company', $userAuth->id_company)->first();
         $typeDocument = TypesDocument::where('id_document', $userAuth->id_document)->first();
         $rol = Roles::where('id_rol', $userAuth->id_rol)->first();
+        $area = Area::where('id_area', $userAuth->id_area)->first();
 
         $userAuth['name_type_document'] = $typeDocument->name ?? null;
         $userAuth['name_company'] = $company->name ?? null;
         $userAuth['type_company'] = $company->type ?? null;
         $userAuth['name_rol'] = $rol->name ?? null;
+        if ($area) {
+            $userAuth['name_area'] = $area->name;
+        }
 
         return response()->json($userAuth);
     }
@@ -40,10 +45,12 @@ class UserController extends Controller
             'c.name AS name_company',
             'td.name AS name_type_document',
             'r.name AS name_rol',
-            'c.type AS type_company'
+            'c.type AS type_company',
+            'a.name AS name_area'
         ])->leftJoin('companies AS c', 'users.id_company', 'c.id_company')
             ->join('types_document AS td', 'users.id_document', 'td.id_document')
             ->join('roles AS r', 'users.id_rol', 'r.id_rol')
+            ->leftJoin('areas AS a', 'users.id_area', 'a.id_area')
             ->where('users.id_rol', '!=', 1)
             ->orderBy('created_at', 'DESC');
 
@@ -70,6 +77,10 @@ class UserController extends Controller
 
             if ($userAuth->id_rol !== 1) {
                 $data['id_company'] = $userAuth->id_company;
+            }
+
+            if ($request->id_area) {
+                $data['id_area'] = $request->id_area;
             }
 
             if ($data['id_company'] === 'IPS') {
@@ -103,6 +114,7 @@ class UserController extends Controller
             }
 
             $dataToUpdate = [
+                'id_rol' => $request->id_rol,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'name' => $request->name,
@@ -110,7 +122,10 @@ class UserController extends Controller
 
             if ($userAuth->id_rol === 1) {
                 $dataToUpdate['id_company'] = $request->id_company;
-                $dataToUpdate['id_rol'] = $request->id_rol;
+            }
+
+            if ($request->id_area) {
+                $dataToUpdate['id_area'] = $request->id_area;
             }
 
             User::where('identification', $request->identification)->update($dataToUpdate);

@@ -36,7 +36,7 @@
             padding: 16px;
         ">
 
-            <img src="{{asset('public/storage/emails/LogoWhite1.png')}}" style="
+            <img src="{{asset('public/storage/emails/Logo Principal_Blanco.png')}}" style="
                 width: 120px;
             ">
 
@@ -67,7 +67,7 @@
                 Haz clic en el siguiente enlace para cambiar tu contraseña, recuerda que solo puedes usarlo una vez.
             </p>
 
-            <a href="{{$resetUrl}}" style="
+            <a href="" style="
                 background-color: #004358;
                 text-decoration: none;
                 border-radius: 32px;
@@ -85,7 +85,7 @@
                 Has recibido este mensaje de parte de:
             </p>
 
-            <img src="{{asset('public/storage/emails/LogoBlue1.png')}}" style="
+            <img src="{{asset('public/storage/emails/Logo_Principal_Negro.png')}}" style="
                 width: 150px;
             ">
         </div>
