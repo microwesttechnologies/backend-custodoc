@@ -33,8 +33,7 @@ class RoutesController extends Controller
 
     public function getRoutesAndPermissions()
     {
-        $routesAndPermissions = Routes::where([['code', '!=', 'COMPANY'], ['code', '!=', 'RANKING']])
-            ->get();
+        $routesAndPermissions = Routes::whereNotIn('code', ['RANKING', 'COMPANY', 'CUSTOMER'])->get();
 
         return response()->json($routesAndPermissions);
     }
