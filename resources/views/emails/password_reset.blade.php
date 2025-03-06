@@ -36,7 +36,7 @@
             padding: 16px;
         ">
 
-            <img src="{{asset('public/storage/emails/Logo Principal_Blanco.png')}}" style="
+            <img src="{{asset('public/storage/emails/LogoPrincipalBlanco.png')}}" style="
                 width: 120px;
             ">
 
@@ -85,7 +85,7 @@
                 Has recibido este mensaje de parte de:
             </p>
 
-            <img src="{{asset('public/storage/emails/Logo_Principal_Negro.png')}}" style="
+            <img src="{{asset('public/storage/emails/LogoPrincipalNegro.png')}}" style="
                 width: 150px;
             ">
         </div>
