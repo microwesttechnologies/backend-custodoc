@@ -67,7 +67,7 @@
                 Haz clic en el siguiente enlace para cambiar tu contraseña, recuerda que solo puedes usarlo una vez.
             </p>
 
-            <a href="" style="
+            <a href="{{$resetUrl}}" style="
                 background-color: #004358;
                 text-decoration: none;
                 border-radius: 32px;
