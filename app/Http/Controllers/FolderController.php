@@ -33,7 +33,7 @@ class FolderController extends Controller
             ->leftJoin('favorite_documents AS fd', function ($leftJoin) use ($userAuth) {
                 $leftJoin->on('fd.id_folder', 'folders.id_folder')
                     ->where('fd.identification', $userAuth->identification);
-            })->where('folders.id_company', $userAuth->id_company);
+            })->where('folders.id_company', $request->query('id_company') ?? $userAuth->id_company);
 
         // Filtro por padre
         if ($parent === 'null' && $request->query('isFavorite') !== 'true' && !$request->query('search')) {
@@ -100,8 +100,8 @@ class FolderController extends Controller
             $userAuth = Auth::user();
 
             $folder = [
+                'id_company' => $request->id_company ?? $userAuth->id_company,
                 'identification' => $userAuth->identification,
-                'id_company' => $userAuth->id_company,
                 'parent' => $request->parent ?? null,
                 'id_area' => $request->id_area,
                 'name' => $request->name,

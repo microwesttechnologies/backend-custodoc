@@ -17,7 +17,7 @@ class RolesController extends Controller
 
         $rolesQuery = Roles::where([['id_company', isset($company) && $company->type === 'IPS' ? null : $id_company], ['id_rol', '!=', '1']]);
 
-        $rolesQuery->where('id_rol', '!=', '4');
+        $rolesQuery->whereNotIn('id_rol', [4, 5]);
 
         return response()->json($rolesQuery->get());
     }

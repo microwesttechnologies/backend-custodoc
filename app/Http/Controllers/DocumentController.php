@@ -19,14 +19,8 @@ class DocumentController extends Controller
             ->whereNull('deleted_at')
             ->orderBy('documents.created_at', 'DESC');
 
-        if ($userAuth->id_rol !== 1 && $userAuth->id_rol !== 4) {
-            $queryDocuments->where('id_company', $userAuth->id_company);
-        }
-
-        if ($userAuth->id_rol === 4) {
-            $queryDocuments->join('companies AS co', function ($join) {
-                $join->on('c.id_company', 'co.id_company')->where('co.type', 'IPS');
-            });
+        if ($userAuth->id_rol !== 1) {
+            $queryDocuments->where('documents.id_company', $request->query('id_company') ?? $userAuth->id_company);
         }
 
         $rangeDates = $request->query('rangeDates');
@@ -49,7 +43,7 @@ class DocumentController extends Controller
                 $leftJoin->on('fd.id_history', 'documents.id_history')
                     ->where('fd.identification', $userAuth->identification);
             })
-            ->where('u.id_company', $userAuth->id_company);
+            ->where('documents.id_company', $request->query('id_company') ?? $userAuth->id_company);
 
         if ($id_folder === 'null' && $request->query('isViewed') !== 'true' && $request->query('isFavorite') !== 'true' && !$request->query('search')) {
             $queryDocuments->whereNull('documents.id_folder');
@@ -132,6 +126,7 @@ class DocumentController extends Controller
         $filePath = $global->uploadOrUpdateFile($request->file('file'), 'documents');
 
         $document = [
+            'id_company' => $request->id_company ?? $userAuth->id_company,
             'identification' => $request->identification ?? null,
             'user_identification' => $userAuth->identification,
             'description' => $request->description,

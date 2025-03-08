@@ -22,12 +22,8 @@ class CustomerController extends Controller
             ->join('types_document AS td', 'customers.id_document', 'td.id_document')
             ->orderBy('created_at', 'DESC');
 
-        if (($userAuth->id_rol !== 1 && $userAuth->id_rol !== 4) || $id_company) {
+        if ($userAuth->id_rol !== 1 || $id_company) {
             $queryCustomers->where('customers.id_company', $id_company ?? $userAuth->id_company);
-        }
-
-        if ($userAuth->id_rol === 4) {
-            $queryCustomers->where('co.type', 'IPS');
         }
 
         return response()->json($queryCustomers->get());
@@ -46,7 +42,7 @@ class CustomerController extends Controller
 
             $data = $request->all();
 
-            if ($userAuth->id_rol !== 1 && $userAuth->id_rol !== 4) {
+            if ($userAuth->id_rol !== 1) {
                 $data['id_company'] = $userAuth->id_company;
             }
 

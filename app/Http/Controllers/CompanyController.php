@@ -8,19 +8,16 @@ use App\Models\Document;
 use App\Models\Company;
 use App\Models\Routes;
 use App\Models\Roles;
-use Illuminate\Support\Facades\Auth;
 
 class CompanyController extends Controller
 {
-    public function getAllCompanies()
+    public function getAllCompanies(Request $request)
     {
-
-        $userAuth = Auth::user();
 
         $companiesQuery = Company::orderBy('created_at', 'DESC');
 
-        if ($userAuth->id_rol === 4) {
-            $companiesQuery->where('type', 'IPS');
+        if ($request->query('type_company')) {
+            $companiesQuery->where('type', $request->query('type_company'));
         }
 
         return response()->json($companiesQuery->get());

@@ -83,7 +83,11 @@ class UserController extends Controller
                 $data['id_area'] = $request->id_area;
             }
 
-            if ($data['id_company'] === 'IPS') {
+            if ($data['id_rol'] === 4) {
+                $data['id_area'] = 1;
+            }
+
+            if ($data['id_company'] === 'IPS' || $data['id_company'] === 'Otras') {
                 unset($data['id_company']);
             }
 
@@ -149,9 +153,10 @@ class UserController extends Controller
             'users.name AS name_user',
             DB::raw('COUNT(d.id_history) AS total_documents')
         ])
-            ->leftJoin('companies AS c', 'users.id_company', 'c.id_company')
             ->Join('documents AS d', 'users.identification', 'd.user_identification')
-            ->groupBy('users.identification', 'c.name', 'users.name');
+            ->Join('companies AS c', 'c.id_company', 'd.id_company')
+            ->whereIn('users.id_rol', [4, 5])
+            ->groupBy('users.identification', 'c.name');
 
         // Obtener el valor del queryParam "rangeDates"
         $rangeDates = $request->query('rangeDates');
