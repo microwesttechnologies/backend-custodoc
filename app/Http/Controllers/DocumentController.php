@@ -14,7 +14,7 @@ class DocumentController extends Controller
     {
         $userAuth = Auth::user();
 
-        $queryDocuments = Document::select('documents.*', 'c.name AS name_customer','co.name AS name_company')
+        $queryDocuments = Document::select('documents.*', 'c.name AS name_customer', 'co.name AS name_company')
             ->join('customers AS c', 'documents.identification', 'c.identification')
             ->join('companies AS co', 'documents.id_company', 'co.id_company')
             ->whereNull('deleted_at')
@@ -128,14 +128,23 @@ class DocumentController extends Controller
 
         $document = [
             'id_company' => $request->id_company ?? $userAuth->id_company,
-            'identification' => $request->identification ?? null,
             'user_identification' => $userAuth->identification,
             'description' => $request->description,
-            'id_folder' => $request->id_folder,
-            'id_area' => $request->id_area,
             'name' => $request->name,
             'path' => $filePath,
         ];
+
+        if (isset($request->id_folder)) {
+            $document['id_folder'] = $request->id_folder;
+        }
+
+        if (isset($request->identification)) {
+            $document['identification'] = $request->identification;
+        }
+
+        if (isset($request->id_area)) {
+            $document['id_area'] = $request->id_area;
+        }
 
         Document::create($document);
 
