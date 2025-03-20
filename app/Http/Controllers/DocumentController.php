@@ -14,8 +14,9 @@ class DocumentController extends Controller
     {
         $userAuth = Auth::user();
 
-        $queryDocuments = Document::select('documents.*', 'c.name AS name_customer')
+        $queryDocuments = Document::select('documents.*', 'c.name AS name_customer','co.name AS name_company')
             ->join('customers AS c', 'documents.identification', 'c.identification')
+            ->join('companies AS co', 'documents.id_company', 'co.id_company')
             ->whereNull('deleted_at')
             ->orderBy('documents.created_at', 'DESC');
 
@@ -217,23 +218,86 @@ class DocumentController extends Controller
         }
     }
 
-    public function getFile($id_history)
+    public function bulkUploadDocumentsOtherCompanies(Request $request)
+    {
+
+        // Inicializar un array para almacenar los archivos subidos
+        $uploadedFiles = [];
+
+        DB::beginTransaction();
+
+        try {
+            $global = new GlobalController();
+            $userAuth = Auth::user();
+
+
+            foreach ($request->documents as $documentData) {
+                // Sube el archivo y guarda la ruta
+                $filePath = $global->uploadOrUpdateFile($documentData['file'], 'documents');
+                $uploadedFiles[] = $filePath;
+
+                // Crea el registro en la base de datos
+                $document = [
+                    'user_identification' => $userAuth->identification,
+                    'id_company' => $request->id_company,
+                    'name' => $documentData['name'],
+                    'id_area' => $request->id_area,
+                    'path' => $filePath
+                ];
+
+                if ($request->id_folder !== 'null') {
+                    $document['id_folder'] = $request->id_folder;
+                }
+
+                Document::create($document);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Documentos agregados exitosamente',
+            ]);
+        } catch (\Throwable $th) {
+            // Revertir transacciones
+            DB::rollBack();
+
+            // Eliminar los archivos que se subieron antes del error
+            foreach ($uploadedFiles as $filePath) {
+                $fullPath = storage_path('app/public/' . $filePath);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath); // Elimina el archivo
+                }
+            }
+
+            if ($th->getMessage() !== null) {
+                return response()->json(['status' => false, 'message' => $th->getMessage() . " en la línea " . $th->getLine()]);
+            } else {
+                return response()->json(['status' => false, 'message' => $th]);
+            }
+        }
+    }
+
+    public function getFile(Request $request)
     {
         $userAuth = Auth::user();
+        $id_history = $request->query('id_history');
         $document = Document::find($id_history);
 
-        if ($document && File::exists(storage_path('app/public/' . $document->path))) {
+        if ($document && File::exists(storage_path('app/' . $document->path))) {
             $recentlyViewed = DB::table('recently_viewed')->where([['identification', $userAuth->identification], ['id_history', $id_history]])->first();
-            if ($recentlyViewed) {
-                DB::table('recently_viewed')->where([['identification', $userAuth->identification], ['id_history', $id_history]])->update(['date_viewed' => now()]);
-            } else {
-                DB::table('recently_viewed')->insert([
-                    'identification' => $userAuth->identification,
-                    'id_history' => $id_history,
-                    'date_viewed' => now()
-                ]);
+            if (!$request->query('download')) {
+                if ($recentlyViewed) {
+                    DB::table('recently_viewed')->where([['identification', $userAuth->identification], ['id_history', $id_history]])->update(['date_viewed' => now()]);
+                } else {
+                    DB::table('recently_viewed')->insert([
+                        'identification' => $userAuth->identification,
+                        'id_history' => $id_history,
+                        'date_viewed' => now()
+                    ]);
+                }
             }
-            return response()->file(storage_path('app/public/' . $document->path));
+            return response()->file(storage_path('app/' . $document->path));
         }
 
         return response()->json([], 404);

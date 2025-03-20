@@ -156,7 +156,8 @@ class UserController extends Controller
             ->Join('documents AS d', 'users.identification', 'd.user_identification')
             ->Join('companies AS c', 'c.id_company', 'd.id_company')
             ->where('users.id_rol', 4)
-            ->groupBy('users.name', 'users.identification', 'c.name');
+            ->groupBy('users.name', 'users.identification', 'c.name')
+            ->orderBy('total_documents','DESC');
 
         // Obtener el valor del queryParam "rangeDates"
         $rangeDates = $request->query('rangeDates');

@@ -19,7 +19,6 @@ class Document extends Model
         'name',
         'path',
         'description',
-        'favorite',
         'id_area',
         'id_company',
         'id_folder'

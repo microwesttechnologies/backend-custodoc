@@ -60,15 +60,16 @@ Route::middleware([JwtMiddleware::class, LogRequest::class])->group(function () 
     Route::group([
         'prefix' => 'document',
     ], function () {
+        Route::post('/bulkUploadDocumentsOtherCompanies', [DocumentController::class, 'bulkUploadDocumentsOtherCompanies']);
         Route::get('/getAllDocumentsByCustomer/{id_customer}', [DocumentController::class, 'getAllDocumentsByCustomer']);
         Route::get('/getDocumentsByFolder/{id_folder}', [DocumentController::class, 'getDocumentsByFolder']);
         Route::get('/markAndDesmarkFavorite', [DocumentController::class, 'markAndDesmarkFavorite']);
         Route::get('/restoreDocument/{id_history}', [DocumentController::class, 'restoreDocument']);
         Route::post('/bulkUploadDocuments', [DocumentController::class, 'bulkUploadDocuments']);
         Route::delete('/{id_history}', [DocumentController::class, 'deleteDocument']);
-        Route::get('/getFile/{id_history}', [DocumentController::class, 'getFile']);
         Route::post('/', [DocumentController::class, 'createOrUpdateDocument']);
         Route::get('/', [DocumentController::class, 'getAllDocuments']);
+        Route::get('/getFile', [DocumentController::class, 'getFile']);
     });
 
     Route::group([

@@ -39,7 +39,7 @@ class CompanyController extends Controller
 
                 $rol = Roles::create(['name' => 'Administrador', 'id_company' => $company->id_company, 'isDefault' => 1]);
 
-                $routes = Routes::whereNotIn('code', ['RANKING', 'COMPANY', 'CUSTOMER'])->get();
+                $routes = Routes::whereNotIn('code', ['RANKING', 'COMPANY', 'CUSTOMER', 'CHOSE_COMPANY'])->get();
 
                 foreach ($routes as $route) {
                     DB::table('roles_routes')->insert([

@@ -49,7 +49,7 @@ class RolesController extends Controller
             )
                 ->leftJoin('roles_routes AS rr', function ($leftJoin) use ($rol) {
                     $leftJoin->on('routes.id_route', 'rr.id_route')->where('rr.id_rol', $rol->id_rol);
-                })->where([['routes.code', '!=', 'COMPANY'], ['routes.code', '!=', 'RANKING']])
+                })->whereNotIn('routes.code', ['COMPANY', 'RANKING', 'CHOSE_COMPANY', 'CUSTOMER'])
                 ->get();
 
             $rolesAndPermissions[$index]['modules'] = $permissionsAndModuleByRole;
