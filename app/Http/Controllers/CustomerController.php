@@ -43,7 +43,7 @@ class CustomerController extends Controller
             $data = $request->all();
 
             if ($userAuth->id_rol !== 1) {
-                $data['id_company'] = $userAuth->id_company;
+                $data['id_company'] = $userAuth->id_rol === 4 ? $request->id_company : $userAuth->id_company;
             }
 
             Customer::create($data);
